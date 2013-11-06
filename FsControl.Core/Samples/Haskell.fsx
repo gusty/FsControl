@@ -386,7 +386,7 @@ let res4n8n12 = runKleisli (app()) (Kleisli (fun y -> [y; y * 2 ; y * 3]) , 4)
 open FsControl.Core.TypeMethods.Applicative
 open FsControl.Core.TypeMethods.Alternative
 let inline pure' x   = Inline.instance Pure x
-let inline (<*>) x y = Inline.instance (Apply, x, y) ()
+let inline (<*>) x y = Inline.instance (Apply, x, y, x) ()
 let inline empty() = Inline.instance Empty ()
 let inline (<|>) (x:'a) (y:'a) :'a = Inline.instance (Append, x) y
 
@@ -402,7 +402,7 @@ let inline optional v = Just <<|> v <|> pure' Nothing
 type ZipList<'s> = ZipList of 's seq with
     //static member instance (_Functor    :Map,   ZipList x  , _) = fun (f:'a->'b) -> ZipList (Seq.map f x)
     static member instance (_Applicative:Pure, _:ZipList<'a>  ) = fun (x:'a)     -> ZipList (Seq.initInfinite (const' x))
-    static member instance (_Applicative:Apply  ,   ZipList (f:seq<'a->'b>), ZipList x ,_:ZipList<'b>) = fun () ->
+    static member instance (_Applicative:Apply  ,   ZipList (f:seq<'a->'b>), ZipList x, _ ,_:ZipList<'b>) = fun () ->
         ZipList (Seq.zip f x |> Seq.map (fun (f,x) -> f x)) :ZipList<'b>
 
 // Test Applicative (lists)
@@ -452,7 +452,9 @@ type Idiomatic with static member inline ($) (Idiomatic, J ) = fun fii x -> (Idi
 
 let resJust2'' = iI safeDivBy (Just 4G) J (Just 8G) Ii
 let resNothing = iI safeDivBy (Just 0G) J (Just 8G) Ii
-let res16n17  = iI (+) (iI (+) (pure' 4) [2;3] Ii) (pure'  10) Ii
+
+// stopped working, needs a type annotation now (when using the default method, otherwise is fine)
+// let res16n17  = iI (+) (iI (+) (pure' 4) [2;3] Ii) (pure'  10) Ii
 
 
 // Foldable

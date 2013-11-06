@@ -59,38 +59,41 @@ module Applicative =
         static member inline ApplyFromMonad f x = f >>= fun x1 -> x >>= fun x2 -> pure'(x1 x2)
 
     type Apply = Apply with
-        static member        instance (Apply, f:List<_>     , x:List<'a>     , _:List<'b>     ) = fun () -> DefaultImpl.ApplyFromMonad f x :List<'b>
-        static member        instance (Apply, f:_ []        , x:'a []        , _:'b []        ) = fun () -> DefaultImpl.ApplyFromMonad f x :'b []
-        static member        instance (Apply, f:'r -> _     , g: _ -> 'a     , _: 'r -> 'b    ) = fun () -> fun x -> f x (g x) :'b
-        static member inline instance (Apply, (a:'m, f)     , (b:'m, x:'a)   , _:'m * 'b      ) = fun () -> (mappend a b, f x) :'m *'b
-        static member        instance (Apply, f:Async<_>    , x:Async<'a>    , _:Async<'b>    ) = fun () -> DefaultImpl.ApplyFromMonad f x :Async<'b>
+        // static member        instance (Apply, f:List<_>     , x:List<'a>  , _, _:List<'b>     ) = fun () -> DefaultImpl.ApplyFromMonad f x :List<'b>
+        // static member        instance (Apply, f:_ []        , x:'a []     , _, _:'b []        ) = fun () -> DefaultImpl.ApplyFromMonad f x :'b []
+        static member        instance (Apply, f:'r -> _     , g: _ -> 'a  , _, _: 'r -> 'b    ) = fun () -> fun x -> f x (g x) :'b
+        static member inline instance (Apply, (a:'m, f)     , (b:'m, x:'a), _, _:'m * 'b      ) = fun () -> (mappend a b, f x) :'m *'b
+        // static member        instance (Apply, f:Async<_>    , x:Async<'a> , _, _:Async<'b>    ) = fun () -> DefaultImpl.ApplyFromMonad f x :Async<'b>
 
-        static member        instance (Apply, f:option<_>   , x:option<'a>   , _:option<'b>   ) = fun () -> 
-            match (f,x) with 
-            | Some f, Some x -> Some (f x) 
-            | _              -> None :option<'b>
+        // static member        instance (Apply, f:option<_>   , x:option<'a>, _, _:option<'b>   ) = fun () -> 
+        //     match (f,x) with 
+        //     | Some f, Some x -> Some (f x) 
+        //     | _              -> None :option<'b>
+        // 
+        // static member        instance (Apply, f:Choice<_,'e>, x:Choice<'a,'e>, _, _:Choice<'b,'e>) = fun () ->
+        //     match (f,x) with
+        //     | (Choice1Of2 a, Choice1Of2 b) -> Choice1Of2 (a b)
+        //     | (Choice2Of2 a, _)            -> Choice2Of2 a
+        //     | (_, Choice2Of2 b)            -> Choice2Of2 b :Choice<'b,'e>
 
-        static member        instance (Apply, f:Choice<_,'e>, x:Choice<'a,'e>, _:Choice<'b,'e>) = fun () ->
-            match (f,x) with
-            | (Choice1Of2 a, Choice1Of2 b) -> Choice1Of2 (a b)
-            | (Choice2Of2 a, _)            -> Choice2Of2 a
-            | (_, Choice2Of2 b)            -> Choice2Of2 b :Choice<'b,'e>
-
-        static member        instance (Apply, KeyValue(k:'k,f), KeyValue(k:'k,x:'a), _:keyValue<'k,'b>) :unit->keyValue<'k,'b> = fun () -> keyValue(k, f x)
-        static member        instance (Apply, f:Map<'k,_>     , x:Map<'k,'a>       , _:Map<'k,'b>     ) :unit->Map<'k,'b>      = fun () -> Map (seq {
+        static member        instance (Apply, KeyValue(k:'k,f), KeyValue(k:'k,x:'a), _, _:keyValue<'k,'b>) :unit->keyValue<'k,'b> = fun () -> keyValue(k, f x)
+        static member        instance (Apply, f:Map<'k,_>     , x:Map<'k,'a>       , _, _:Map<'k,'b>     ) :unit->Map<'k,'b>      = fun () -> Map (seq {
             for KeyValue(k, vf) in f do
                 match Map.tryFind k x with
                 | Some vx -> yield k, vf vx
                 | _       -> () })
 
-        static member        instance (Apply, f:_ Expr      , x:'a Expr      , _:'b Expr      ) = fun () -> <@ (%f) %x @> :'b Expr
+        static member        instance (Apply, f:_ Expr      , x:'a Expr   , _, _:'b Expr      ) = fun () -> <@ (%f) %x @> :'b Expr
 
-        static member        instance (Apply, f:('a->'b) ResizeArray, x:'a ResizeArray, _:'b ResizeArray) = fun () ->
+        static member        instance (Apply, f:('a->'b) ResizeArray, x:'a ResizeArray, _, _:'b ResizeArray) = fun () ->
             new ResizeArray<'b>(Seq.collect (fun x1 -> Seq.collect (fun x2 -> Seq.singleton (x1 x2)) x) f) :'b ResizeArray
+
+        // Default Implementation
+        static member inline instance (Apply, _:obj , x, f:#obj, _:#obj) = fun () -> (f >>= fun x1 -> x >>= fun x2 -> pure'(x1 x2)) :#obj
 
         
    
-    let inline internal (<*>) x y = Inline.instance (Apply, x, y) ()
+    let inline internal (<*>) x y = Inline.instance (Apply, x, y, x) ()
 
 open Applicative
 
