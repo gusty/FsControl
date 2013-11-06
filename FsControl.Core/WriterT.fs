@@ -22,7 +22,7 @@ module WriterT =
         return w}
 
 type WriterT<'WMa> with
-    static member inline instance (Functor.Map, WriterT m, _) = fun f -> WriterT <| do'(){
+    static member inline instance (Functor.Map, WriterT m, _, _) = fun f -> WriterT <| do'(){
         let! (a, w) = m
         return (f a, w)}
 

@@ -17,7 +17,7 @@ module ErrorT =
     let map f (ErrorT m) = ErrorT(f m)
 
 type ErrorT<'R> with
-    static member inline instance (Functor.Map, ErrorT x :ErrorT<'ma>, _) = fun (f) -> ErrorT (Functor.fmap (Error.map f) x) :ErrorT<'mb>
+    static member inline instance (Functor.Map, ErrorT x :ErrorT<'ma>, _, _) = fun (f) -> ErrorT (Functor.fmap (Error.map f) x) :ErrorT<'mb>
 
     static member inline instance (Applicative.Pure, _:ErrorT<'ma>) = ErrorT << return' << Choice1Of2 :'a -> ErrorT<'ma>
     static member inline instance (Applicative.Apply, ErrorT(f:'ma_b), ErrorT(x:'ma),  _:ErrorT<'mb>) = fun () ->

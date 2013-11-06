@@ -14,7 +14,7 @@ module OptionT =
     let map f (OptionT m) = OptionT (f m)
 
 type OptionT<'Ma> with
-    static member inline instance (Functor.Map, OptionT x :OptionT<'ma>, _) = fun (f:'a->'b) -> OptionT (fmap (Option.map f) x) :OptionT<'mb>
+    static member inline instance (Functor.Map, OptionT x :OptionT<'ma>, _, _ ) = fun (f:'a->'b) -> OptionT (fmap (Option.map f) x) :OptionT<'mb>
     static member inline instance (Applicative.Pure,            _:OptionT<'ma>) = OptionT << return' << Some :'a -> OptionT<'ma>
     static member inline instance (Applicative.Apply, OptionT(f), OptionT(x),  _:OptionT<'r>) = fun () ->
         OptionT(fmap (<*>) f <*> x) :OptionT<'r>
@@ -36,7 +36,7 @@ module ListT =
     let map f (ListT m) = ListT (f m)
 
 type ListT<'Ma> with
-    static member inline instance (Functor.Map ,            ListT x:ListT<'ma>, _) = fun (f:'a->'b) -> ListT (fmap (List.map f) x):ListT<'mb>
+    static member inline instance (Functor.Map ,             ListT x:ListT<'ma>, _, _) = fun (f:'a->'b) -> ListT (fmap (List.map f) x):ListT<'mb>
     static member inline instance (Applicative.Pure,                     _:ListT<'ma>) = ListT << return' << singleton :'a -> ListT<'ma>
     static member inline instance (Applicative.Apply, ListT(f), ListT(x),  _:ListT<'r>) = fun () ->
         ListT(fmap (<*>) f <*> x) :ListT<'r>
