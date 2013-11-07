@@ -437,8 +437,10 @@ let res18n24' = iI (+) (ZipList(seq [8;4])) (ZipList(seq [10;20])) Ii
 let res6n7n8' = iI (+) (pure' 5G          ) (ZipList [1;2;3]     ) Ii
 let res18n14' = iI (+) (ZipList(seq [8;4])) (pure' 10            ) Ii
 
-let inline join x =  x >>= id
-type Idiomatic with static member inline ($) (Idiomatic, Ji) = fun xii -> join xii
+let inline join' x =  x >>= id
+let inline join (x:'Monad'Monad'a) : 'R = Inline.instance (Join, x, x) ()
+
+type Idiomatic with static member inline ($) (Idiomatic, Ji) = fun xii -> join' xii
 
 let safeDiv x y = if y == 0 then Nothing else Just (x </div/> y)
 let resJust3    = join (iI safeDiv (Just 6) (Just 2) Ii)
@@ -448,7 +450,7 @@ let safeDivBy y = if y == 0 then Nothing else Just (fun x -> x </div/> y)
 let resJust2  = join (pure' safeDivBy  <*> Just 4G) <*> Just 8G
 let resJust2' = join (   iI safeDivBy (Just 4G) Ii) <*> Just 8G
 
-type Idiomatic with static member inline ($) (Idiomatic, J ) = fun fii x -> (Idiomatic $ x) (join fii)
+type Idiomatic with static member inline ($) (Idiomatic, J ) = fun fii x -> (Idiomatic $ x) (join' fii)
 
 let resJust2'' = iI safeDivBy (Just 4G) J (Just 8G) Ii
 let resNothing = iI safeDivBy (Just 0G) J (Just 8G) Ii

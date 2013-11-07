@@ -11,6 +11,7 @@ type internal keyValue<'a,'b> = System.Collections.Generic.KeyValuePair<'a,'b>
 
 // Monad class ------------------------------------------------------------
 module Monad =
+
     type Bind = Bind with
         static member        instance (Bind, x:option<_>    , _:option<'b>   ) = fun (f:_->option<'b>) -> Option.bind   f x
         static member        instance (Bind, x:List<_>      , _:List<'b>     ) = fun (f:_->List<'b>  ) -> List.collect  f x
@@ -30,6 +31,16 @@ module Monad =
 
     let inline internal (>>=) x (f:_->'R) : 'R = Inline.instance (Bind, x) f
 
+
+    type Join = Join with
+        static member        instance (Join, x:option<option<'a>>    , _ , _:option<'a>   ) = fun () -> Option.bind   id x
+        //static member        instance (Join, x:List<_>      , _ , _:List<'b>     ) = fun () -> List.collect  id x
+        static member        instance (Join, x:'b [] []         , _ , _:'b []        ) = fun () -> Array.collect id x
+
+        // Default Implementation
+        static member inline instance (Join, _:obj , x:#obj, _:#obj) = fun () -> x >>= id :#obj
+
+    let inline internal join (x:'Monad'Monad'a) : 'Monad'a = Inline.instance (Join, x, x) ()
 
 open Monad
 
