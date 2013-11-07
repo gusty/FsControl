@@ -196,20 +196,42 @@ module Comonad =
     let inline internal extract x = Inline.instance (Extract, x) ()
 
 
-    type Duplicate = Duplicate with
-        static member        instance (Duplicate, (w:'w, a:'a), _:'w * ('w*'a)) = fun () -> (w,(w,a))
-        static member inline instance (Duplicate, f:'m->'a, _:'m->'m->'a) = fun () a b -> f (mappend a b)
+    type Extend = Extend with
+        static member        instance (Extend, (w:'w, a:'a), _:'w *'b) = fun (f:_->'b) -> (w, f (w,a))        
+        static member inline instance (Extend, (g:'m -> 'a), _:'m->'b) = fun (f:_->'b) a -> f (fun b -> g (mappend a b))
+
+        //static member inline instance (Extend, (s:'m -> 'a), _:'b)        = fun (g:_->'b) -> g << (fun f (a:'m) b -> f (mappend a b)) s
 
         // Restricted
-        static member        instance (Duplicate, s:List<'a>, _:List<List<'a>>) = fun () -> 
+        static member        instance (Extend, s:List<'a>, _:List<'b>) = fun g -> 
+            let rec tails = function [] -> [] | x::xs as s -> s::(tails xs)
+            List.map g (tails s)
+
+        static member        instance (Extend, s:'a [], _:'b []) = fun g -> 
+            let rec tails = function [] -> [] | x::xs as s -> s::(tails xs)
+            Array.map g (s |> Array.toList |> tails |> List.toArray |> Array.map List.toArray)
+
+
+    let inline internal extend g s = Inline.instance (Extend, s) g
+    let inline internal (=>>)  s g = extend g s
+
+    type Duplicate = Duplicate with
+        // static member        instance (Duplicate, (w:'w, a:'a), _, _:'w * ('w*'a)) = fun ()     -> (w, (w, a))
+        // static member inline instance (Duplicate,  f:'m -> 'a , _, _:'m->'m->'a  ) = fun () a b -> f (mappend a b)
+
+        // Restricted
+        static member        instance (Duplicate, s:List<'a>, _, _:List<List<'a>>) = fun () -> 
             let rec tails = function [] -> [] | x::xs as s -> s::(tails xs)
             tails s
 
-    let inline internal duplicate x = Inline.instance (Duplicate, x) ()
+        static member        instance (Duplicate, s: array<'a>, _, _: array<array<'a>>) = fun () -> 
+            let rec tails = function [] -> [] | x::xs as s -> s::(tails xs)
+            s |> Array.toList |> tails |> List.toArray |> Array.map List.toArray
 
+        // Default Implementation
+        static member inline instance (Duplicate, _:obj , x:#obj, _:#obj) = fun () -> extend id x :#obj
 
-    let inline internal extend g s = fmap g (duplicate s)
-    let inline internal (=>>)  s g = fmap g (duplicate s)
+    let inline internal duplicate x = Inline.instance (Duplicate, x, x) ()
 
 
 // MonadPlus class ------------------------------------------------------------
